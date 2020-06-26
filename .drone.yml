@@ -9,11 +9,16 @@ steps:
 - name: build
   image: briandowns/rancher-build-base:v0.1.1
   volumes:
-  - name: docker
+  - name: dockersock
     path: /var/run
   commands:
   - sleep 20
-  - TAG=${DRONE_TAG} make
+  - sudo TAG=${DRONE_TAG} make
+  environment:
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOCKER_PASSWORD:
+      from_secret: docker_password
   when:
     event:
     - tag
@@ -21,7 +26,7 @@ steps:
 - name: push
   image: briandowns/rancher-build-base:v0.1.1
   volumes:
-  - name: docker
+  - name: dockersock
     path: /var/run
   commands:
   - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
@@ -38,7 +43,7 @@ steps:
 - name: scan
   image: briandowns/rancher-build-base:v0.1.1
   volumes:
-  - name: docker
+  - name: dockersock
     path: /var/run
   commands:
   - TAG=${DRONE_TAG} make image-scan
@@ -49,7 +54,7 @@ steps:
 - name: manifest
   image: briandowns/rancher-build-base:v0.1.1
   volumes:
-  - name: docker
+  - name: dockersock
     path: /var/run
   commands:
   - TAG=${DRONE_TAG} make image-manifest
