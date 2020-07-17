@@ -1,17 +1,25 @@
 #!/bin/bash
 istioctl version
-if kubectl get pods --namespace=istio-system | grep istiod
+if kubectl get --ignore-not-found=true deploy istiod -n istio-system
 then
-    echo "Running istioctl upgrade"
-    istioctl upgrade -y  -f /app/istio-base.yaml
+    if [ ${APPLY_OVERLAY_CONFIG} = "true" ]
+    then
+        echo "Running istioctl upgrade with overlay"
+        istioctl upgrade -y  -f /app/istio-base.yaml -f /app/overlay-config.yaml
+    else 
+        echo "Running istioctl upgrade"
+        istioctl upgrade -y  -f /app/istio-base.yaml
+    fi
     istioctl verify-install -f /app/istio-base.yaml
+    
 else
-    echo "Running istioctl install"
-    istioctl install -y -f /app/istio-base.yaml
+    if [ ${APPLY_OVERLAY_CONFIG} = "true" ]
+    then
+        echo "Running istioctl install with overlay"
+        istioctl install -y  -f /app/istio-base.yaml -f /app/overlay-config.yaml
+    else 
+        echo "Running istioctl install"
+        istioctl install -y -f /app/istio-base.yaml
+    fi
     istioctl verify-install -f /app/istio-base.yaml
 fi 
-if [ ${APPLY_OVERLAY_CONFIG} = true ]
-then
-    echo "Overlay configuration detect - running istioctl install"
-    istioctl install -f /app/overlay-config.yaml
-fi
